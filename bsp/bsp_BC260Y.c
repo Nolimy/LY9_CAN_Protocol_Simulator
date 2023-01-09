@@ -17,7 +17,6 @@ uint8_t Uart1_Rx_Cnt = 0;  //接收缓冲计数
 uint8_t Uart3_Rx_Cnt = 0;  //接收缓冲计数
 uint8_t okFlag = 0; //是否查询OK字符标志位
 
-struct RacingCarData racingCarData;
 /*失败： 0  成功 ： 1  */
 uint8_t cmdToBC26Y(char *strSource, char *strTarget, uint8_t okCheck)
 {

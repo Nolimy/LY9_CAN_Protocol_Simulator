@@ -1,7 +1,9 @@
 #include "Bsp_CAN.h"
 
+#define Transmitter 1
+#define Receiver    0
 
-void CANFilter_Config(void)
+void CANFilter_Config(void)//无论发啥我都照单全收。
 {
     CAN_FilterTypeDef  sFilterConfig;
     
@@ -59,3 +61,42 @@ void CanFilterInit()
 	}
 	printf("CAN_IT_RX_FIFO0_MSG_PENDING Enable Success\r\n");
 }
+
+/*
+struct RacingCarData
+{
+	uint8_t FrontSpeed;          //前轮车速 在这里作为参考车速
+	uint8_t PedalTravel;         //油门踏板开度 范围0~1000% 分辨率1%
+	uint8_t brakeTravel;         //刹车踏板开度
+	uint8_t batAlarm;            //电池告警
+	uint8_t batTemp;             //电池温度
+	uint8_t batLevel;            //电池电量
+	uint8_t batVol;              //电池电压
+	uint8_t gearMode;            //挡位信息
+	uint8_t carMode;             //车辆运行模式
+	uint8_t timeCount;           //运行时间
+	uint8_t carTravel;           //车辆跑动距离
+	uint8_t mcu1Temp;            //电机控制器1温度
+	uint8_t mcu2Temp;            //电机控制器2温度
+	uint8_t lmotorTemp;          //左电机温度
+	uint8_t rmotorTemp;          //右电机温度
+	uint8_t lmotorSpeed;         //左电机转速
+	uint8_t rmotorSpeed;         //右电机转速
+	
+};
+*/
+
+
+#ifdef Transmitter
+struct RacingCarData racingCarData;
+void carDataUpdate()//模拟汽车跑动数据
+{
+	racingCarData.FrontSpeed = ((racingCarData.lmotorSpeed + racingCarData.rmotorSpeed)/2)/
+}
+
+#endif
+
+#ifdef Receiver
+
+
+#endif

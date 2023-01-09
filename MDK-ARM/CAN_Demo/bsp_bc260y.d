@@ -34,4 +34,4 @@ can_demo/bsp_bc260y.o: ..\bsp\bsp_BC260Y.c ..\bsp\bsp_BC260Y.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_tim.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_tim_ex.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_uart.h \
-  ..\Core\Inc\gpio.h
+  ..\Core\Inc\gpio.h ..\Core\Inc\Bsp_CAN.h ..\Core\Inc\can.h
