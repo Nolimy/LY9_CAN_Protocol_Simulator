@@ -1,7 +1,14 @@
 #include "Bsp_CAN.h"
-
+#include "string.h"
 #define Transmitter 1
 #define Receiver    0
+
+#define  SPEED_RATIO  4 	//主减速比
+#define  PI  3.14	       	//圆周率
+#define  WHEEL_R  0.2286	   	//车轮半径
+#define  NUM_OF_TEETH 20.0    //码盘齿数
+
+uint8_t upSpeedFlag = 1;
 
 void CANFilter_Config(void)//无论发啥我都照单全收。
 {
@@ -25,16 +32,16 @@ void CANFilter_Config(void)//无论发啥我都照单全收。
     printf("CAN Filter Config Success!\r\n");
 
 }
-void CAN1_Send_Test()
+void CAN1_Send(uint32_t CAN_ID, uint8_t *CAN_DATA)
 {
-	uint8_t data[4] = {0x01, 0x02, 0x03, 0x04};
+	//uint8_t data[4] = {0x01, 0x02, 0x03, 0x04};
     
   TxMessage.IDE = CAN_ID_STD;     //设置ID类型
-	TxMessage.StdId = 0x222;        //设置ID号
+	TxMessage.StdId = CAN_ID;        //设置ID号
   TxMessage.RTR = CAN_RTR_DATA;   //设置传送数据帧
-	TxMessage.DLC = 4;              //设置数据长度
+	TxMessage.DLC = 8;              //设置数据长度
     
-	if (HAL_CAN_AddTxMessage(&hcan1, &TxMessage, data, (uint32_t*)CAN_TX_MAILBOX0) != HAL_OK) {
+	if (HAL_CAN_AddTxMessage(&hcan1, &TxMessage, CAN_DATA, (uint32_t*)CAN_TX_MAILBOX0) != HAL_OK) {
         printf("CAN send test data fail!\r\n");
         Error_Handler();
     }
@@ -65,23 +72,33 @@ void CanFilterInit()
 /*
 struct RacingCarData
 {
-	uint8_t FrontSpeed;          //前轮车速 在这里作为参考车速
-	uint8_t PedalTravel;         //油门踏板开度 范围0~1000% 分辨率1%
-	uint8_t brakeTravel;         //刹车踏板开度
-	uint8_t batAlarm;            //电池告警
-	uint8_t batTemp;             //电池温度
-	uint8_t batLevel;            //电池电量
-	uint8_t batVol;              //电池电压
-	uint8_t gearMode;            //挡位信息
-	uint8_t carMode;             //车辆运行模式
-	uint8_t timeCount;           //运行时间
-	uint8_t carTravel;           //车辆跑动距离
-	uint8_t mcu1Temp;            //电机控制器1温度
-	uint8_t mcu2Temp;            //电机控制器2温度
-	uint8_t lmotorTemp;          //左电机温度
+
+	//ID:0X193
+	uint8_t FrontSpeed;          //前轮车速 在这里作为参考车速 1Byte
+	uint8_t PedalTravel;         //油门踏板开度    1Byte
+	uint8_t brakeTravel;         //刹车踏板开度    1Byte
+	uint8_t carTravel;           //车辆跑动距离    1Byte
+	uint16_t l_motor_torque;      //左电机目标转矩  2Byte
+  uint16_t r_motor_torque;      //右电机目标转矩  2Byte
+
+	//ID:0X196 
+	uint8_t batAlarm;            //电池告警  0~4 无告警：0 一级告警：1（最严重） 二级告警：2 三级告警：3
+	uint8_t batTemp;               //电池温度  0-160  offset:-40
+	uint8_t batLevel;            //电池电量  0-100
+	uint16_t batVol;              //电池电压  0-900
+	uint8_t gearMode;            //挡位信息  1Bit
+	uint8_t carMode;             //车辆运行模式  1Bit 1:转矩模式 2：速度模式
+	//ID:0X191
+	uint16_t lmotorSpeed;         //左电机转速  2Bit offset -10000rpm 分辨率:0.5
+	//ID:0X192
+	uint8_t lmotorTemp;          //左电机温度   1Byte 0~150摄氏度 offset:-50
+	uint8_t mcu1Temp;            //电机控制器1温度 1Byte 0~150摄氏度 offset:-50
+	//ID:0X194	
+	uint16_t rmotorSpeed;         //右电机转速  2Bit offset -10000rpm 分辨率:0.5
+	//ID:0X195
 	uint8_t rmotorTemp;          //右电机温度
-	uint8_t lmotorSpeed;         //左电机转速
-	uint8_t rmotorSpeed;         //右电机转速
+	uint8_t mcu2Temp;            //电机控制器2温度
+	
 	
 };
 */
@@ -91,9 +108,118 @@ struct RacingCarData
 struct RacingCarData racingCarData;
 void carDataUpdate()//模拟汽车跑动数据
 {
-	racingCarData.FrontSpeed = ((racingCarData.lmotorSpeed + racingCarData.rmotorSpeed)/2)/
+	//ID:0X196
+	racingCarData.gearMode = 2; //0:空挡  1:倒挡 2：前进挡
+	racingCarData.carMode = 2;//速度模式
+	racingCarData.batTemp = 40;//电池温度 40摄氏度
+	racingCarData.batLevel = 100;//动力电池电量 100%
+	racingCarData.batVol = 450;//动力电池电压450V
+	racingCarData.batAlarm = 0;//无告警
+	
+	//ID:0X191
+	if(upSpeedFlag)
+	{
+		racingCarData.lmotorSpeed+=100;         //左电机转速  2Bit offset -10000rpm 分辨率:0.5
+		if(racingCarData.lmotorSpeed == 6000)
+			upSpeedFlag = 0;
+	}
+	else
+	{
+		racingCarData.lmotorSpeed-=100;
+		if(racingCarData.lmotorSpeed == 0)
+			upSpeedFlag = 1;
+	}
+	//ID:0X194
+	racingCarData.rmotorSpeed = racingCarData.lmotorSpeed;
+	
+	//	//ID:0X193
+//	uint8_t FrontSpeed;          //前轮车速 在这里作为参考车速 1Byte
+//	uint8_t PedalTravel;         //油门踏板开度    1Byte
+//	uint8_t brakeTravel;         //刹车踏板开度    1Byte
+//	uint8_t carTravel;           //车辆跑动距离    1Byte
+//	uint16_t l_motor_torque      //左电机目标转矩  2Byte
+//  uint16_t r_motor_torque      //右电机目标转矩  2Byte
+	//ID:0X193
+	racingCarData.FrontSpeed = (int)(racingCarData.lmotorSpeed/SPEED_RATIO*PI*2*WHEEL_R*3.6/60);  //由转速换算为车速
+	if(upSpeedFlag)
+	{
+		racingCarData.l_motor_torque = 1000;
+		racingCarData.r_motor_torque = racingCarData.l_motor_torque;
+		racingCarData.PedalTravel = 100; //油门踏板开度为100 踩死
+		racingCarData.brakeTravel = 0;
+	}
+		
+	else
+	{
+		racingCarData.l_motor_torque = 0;
+		racingCarData.r_motor_torque = racingCarData.l_motor_torque;
+		racingCarData.PedalTravel =0;
+		racingCarData.brakeTravel = 40;
+	}
+	racingCarData.carTravel+=5;
+	
+	//ID:0X192
+	racingCarData.lmotorTemp = 40; //左电机温度   1Byte 0~150摄氏度 offset:-50
+	racingCarData.mcu1Temp = 40;   //电机控制器1温度 1Byte 0~150摄氏度 offset:-50
+	//ID:0X195
+	racingCarData.rmotorTemp = 40; //右电机温度   1Byte 0~150摄氏度 offset:-50
+	racingCarData.mcu2Temp = 40;   //电机控制器2温度 1Byte 0~150摄氏度 offset:-50
+	
+	canDataPack();
 }
+//按照CAN协议打包要发送的行车数据
+void canDataPack()
+{
+	//ID:0X191
+	uint8_t carData[8];
+	//	LeftMotorRPM = (CAN_Re_0_M06[0] + CAN_Re_0_M06[1]*256)/2 - 10000;
+	carData[0] = ((racingCarData.lmotorSpeed + 10000) * 2) % 256; //转速 低八位
+	carData[1] = ((racingCarData.lmotorSpeed + 10000) * 2) >> 8;  //转速 高八位
+	CAN1_Send(0X191, carData);
+	memset(carData,0x00,sizeof(carData)); //清空数组
 
+	//ID:0X194
+	//	LeftMotorRPM = (CAN_Re_0_M06[0] + CAN_Re_0_M06[1]*256)/2 - 10000;
+	carData[0] = ((racingCarData.rmotorSpeed + 10000) * 2) % 256; //转速 低八位
+	carData[1] = ((racingCarData.rmotorSpeed + 10000) * 2) >> 8;  //转速 高八位
+	CAN1_Send(0X194, carData);
+	memset(carData,0x00,sizeof(carData)); //清空数组
+	
+	//ID:0X192      
+	carData[0] = racingCarData.lmotorTemp + 50;//左电机温度   1Byte 0~150摄氏度 offset:-50
+	carData[1] = racingCarData.mcu1Temp + 50;  //电机控制器1温度 1Byte 0~150摄氏度 offset:-50
+	CAN1_Send(0X192, carData);
+	memset(carData,0x00,sizeof(carData)); //清空数组
+	
+	//ID:0X195
+	carData[0] = racingCarData.rmotorTemp + 50;//右电机温度   1Byte 0~150摄氏度 offset:-50
+	carData[1] = racingCarData.mcu2Temp + 50;  //电机控制器温度 1Byte 0~150摄氏度 offset:-50
+	CAN1_Send(0X195, carData);
+	memset(carData,0x00,sizeof(carData)); //清空数组
+	        
+	//ID:0X196
+	carData[0] = racingCarData.batAlarm;//电池告警  0~4 无告警：0 一级告警：1（最严重） 二级告警：2 三级告警：3
+	carData[1] = racingCarData.batTemp + 40;//电池温度  0-160  offset:-40
+	carData[2] = racingCarData.batLevel;//电池电量  0-100
+	carData[3] = racingCarData.gearMode;//挡位信息  1Bit
+	carData[4] = racingCarData.carMode;//车辆运行模式  1Bit 1:转矩模式 2：速度模式
+	carData[5] = racingCarData.batVol * 10 % 256;//电池电压  0-900 Resolution = 0.1
+	carData[6] = racingCarData.batVol * 10 >> 8;
+	CAN1_Send(0X196, carData);
+	memset(carData,0x00,sizeof(carData)); //清空数组
+	
+	//ID:0X193
+	carData[0] = racingCarData.FrontSpeed;
+	carData[1] = racingCarData.PedalTravel;
+	carData[2] = racingCarData.brakeTravel;
+	carData[3] = racingCarData.carTravel;
+	carData[4] = racingCarData.l_motor_torque % 256;
+	carData[5] = racingCarData.l_motor_torque >> 8;
+	carData[6] = racingCarData.r_motor_torque % 256;
+	carData[7] = racingCarData.r_motor_torque >> 8;
+	CAN1_Send(0X193, carData);
+	memset(carData,0x00,sizeof(carData)); //清空数组
+}
 #endif
 
 #ifdef Receiver

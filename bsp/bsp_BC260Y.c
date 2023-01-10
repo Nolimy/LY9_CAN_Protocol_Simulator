@@ -152,7 +152,7 @@ void MQTT_Pubdata(char *json)
 //FrontSpeed,PedalTravel,batAlarm,MotorSpeed,batTemp,batLevel,gearMode,carMode,time_Count,batVol,carTravel,mcu1Temp,mcu2Temp,breakTravel,lmotorTemp,rmotorTemp,lmotorSpeed,rmotorSpeed,motorTemp
 void jsonPack(void)//json打包 分段 heap太小一次性打包不下
 {
-	char json[] = "{\"cSpeed\": %d,\"Pos\": %d,\"bAlarm\": %d,\"lmSpeed\": %d,\"rmSpeed\": %d,\"bTemp\": %d,\"bLevel\": %d,\"gMode\": %d,\"cMode\": %d,\"timeCount\": %d,\"batVol\": %d,\"carDistce\": %d,\"mcu1Temp\": %d,\"mcu2Temp\": %d,\"brakeTravel\": %d,\"lmoTemp\": %d,\"rmoTemp\": %d}";
+	char json[] = "{\"cSpeed\": %d,\"Pos\": %d,\"bAlarm\": %d,\"lmSpeed\": %d,\"rmSpeed\": %d,\"bTemp\": %d,\"bLevel\": %d,\"gMode\": %d,\"cMode\": %d,\"lmTorque\":%d,\"rmTorque\":%d,\"batVol\": %d,\"carDistce\": %d,\"mcu1Temp\": %d,\"mcu2Temp\": %d,\"brakeTravel\": %d,\"lmoTemp\": %d,\"rmoTemp\": %d}";
 	char t_json[256];
 	sprintf(t_json, json, racingCarData.FrontSpeed,\
 	racingCarData.PedalTravel, \
@@ -163,7 +163,8 @@ void jsonPack(void)//json打包 分段 heap太小一次性打包不下
 	racingCarData.batLevel, \
 	racingCarData.gearMode, \
 	racingCarData.carMode, \
-	racingCarData.timeCount, \
+	racingCarData.l_motor_torque, \
+	racingCarData.r_motor_torque, \
 	racingCarData.batVol, \
 	racingCarData.carTravel, \
 	racingCarData.mcu1Temp, \

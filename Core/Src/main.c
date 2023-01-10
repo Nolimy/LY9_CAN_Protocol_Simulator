@@ -129,9 +129,9 @@ int main(void)
 	
 	//进入main函数之前清空buffer和标志位.
 	
-	mqttServiceStartup();
+	//mqttServiceStartup();
     /* 1. CAN Filter Config */
-  //CanFilterInit();
+  CanFilterInit();
 	
   /* USER CODE END 2 */
 
@@ -141,12 +141,13 @@ int main(void)
   {
 		//CAN1_Send_Test();
 		//ws2812_init(12);
-		HAL_Delay(500);
-		ws2812_blue(12);
-		HAL_Delay(500);
-		jsonPack();
+		carDataUpdate();
+//		HAL_Delay(500);
+//		ws2812_blue(12);
+//		HAL_Delay(500);
+		//jsonPack();
 		HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7);
-		HAL_Delay(100);
+		HAL_Delay(500);
 		
 		//HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7);
     /* USER CODE END WHILE */

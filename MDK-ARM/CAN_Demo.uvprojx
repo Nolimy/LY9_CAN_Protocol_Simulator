@@ -50,7 +50,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>CAN_Demo\</OutputDirectory>
-          <OutputName>CAN_Demo</OutputName>
+          <OutputName>CAN_Meter_Simulator</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
