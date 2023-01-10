@@ -61,26 +61,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/***½ÓÊÕº¯Êı***/
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
-{
-    uint8_t  data[8];
-    HAL_StatusTypeDef	status;
-    
-    if (hcan == &hcan1) {	
-        status = HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxMessage, data);
-        if (HAL_OK == status){                              			
-            printf("--->Data Receieve!\r\n");
-            printf("RxMessage.StdId is %#x\r\n",  RxMessage.StdId);
-            printf("data[0] is 0x%02x\r\n", data[0]);
-            printf("data[1] is 0x%02x\r\n", data[1]);
-            printf("data[2] is 0x%02x\r\n", data[2]);
-            printf("data[3] is 0x%02x\r\n", data[3]);
-            printf("<---\r\n");
-            
-        }
-    }
-}
+
 
 /* USER CODE END 0 */
 
@@ -141,7 +122,9 @@ int main(void)
   {
 		//CAN1_Send_Test();
 		//ws2812_init(12);
+#if Transmitter		
 		carDataUpdate();
+#endif
 //		HAL_Delay(500);
 //		ws2812_blue(12);
 //		HAL_Delay(500);

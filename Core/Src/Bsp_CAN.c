@@ -1,7 +1,5 @@
 #include "Bsp_CAN.h"
 #include "string.h"
-#define Transmitter 1
-#define Receiver    0
 
 #define  SPEED_RATIO  4 	//主减速比
 #define  PI  3.14	       	//圆周率
@@ -9,6 +7,7 @@
 #define  NUM_OF_TEETH 20.0    //码盘齿数
 
 uint8_t upSpeedFlag = 1;
+struct RacingCarData racingCarData;
 
 void CANFilter_Config(void)//无论发啥我都照单全收。
 {
@@ -32,6 +31,30 @@ void CANFilter_Config(void)//无论发啥我都照单全收。
     printf("CAN Filter Config Success!\r\n");
 
 }
+
+/***接收函数***/
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+	uint8_t  data[8];
+	HAL_StatusTypeDef	status;
+	
+	if (hcan == &hcan1) {	
+#if Receiver
+		status = HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxMessage, data);
+#endif
+		if (HAL_OK == status){   
+			decodeCanData(RxMessage.StdId, data);
+			printf("--->Data Receieve!\r\n");
+			printf("RxMessage.StdId is %#x\r\n",  RxMessage.StdId);
+			printf("data[0] is 0x%02x\r\n", data[0]);
+			printf("data[1] is 0x%02x\r\n", data[1]);
+			printf("data[2] is 0x%02x\r\n", data[2]);
+			printf("data[3] is 0x%02x\r\n", data[3]);
+			printf("<---\r\n");  
+		}
+	}
+}
+
 void CAN1_Send(uint32_t CAN_ID, uint8_t *CAN_DATA)
 {
 	//uint8_t data[4] = {0x01, 0x02, 0x03, 0x04};
@@ -104,8 +127,7 @@ struct RacingCarData
 */
 
 
-#ifdef Transmitter
-struct RacingCarData racingCarData;
+#if Transmitter
 void carDataUpdate()//模拟汽车跑动数据
 {
 	//ID:0X196
@@ -203,8 +225,8 @@ void canDataPack()
 	carData[2] = racingCarData.batLevel;//电池电量  0-100
 	carData[3] = racingCarData.gearMode;//挡位信息  1Bit
 	carData[4] = racingCarData.carMode;//车辆运行模式  1Bit 1:转矩模式 2：速度模式
-	carData[5] = racingCarData.batVol * 10 % 256;//电池电压  0-900 Resolution = 0.1
-	carData[6] = racingCarData.batVol * 10 >> 8;
+	carData[6] = racingCarData.batVol * 10 % 256;//电池电压  0-900 Resolution = 0.1 LSB在后八位
+	carData[5] = racingCarData.batVol * 10 >> 8;
 	CAN1_Send(0X196, carData);
 	memset(carData,0x00,sizeof(carData)); //清空数组
 	
@@ -222,7 +244,43 @@ void canDataPack()
 }
 #endif
 
-#ifdef Receiver
+#if Receiver
 
 
+void decodeCanData(uint32_t canID, uint8_t *canData)
+{
+	switch(canID)
+	{
+		case 0x191:
+			racingCarData.lmotorSpeed = (canData[0] + canData[1]*256)/2 - 10000;
+			break;
+		case 0x192:
+			racingCarData.lmotorTemp = canData[0] - 50;
+			racingCarData.mcu1Temp = canData[1] - 50;
+			break;
+		case 0x193:
+			racingCarData.FrontSpeed = canData[0];
+			racingCarData.PedalTravel = canData[1];
+			racingCarData.brakeTravel = canData[2];
+			racingCarData.carTravel = canData[3];
+			racingCarData.l_motor_torque = canData[4] + canData[5] * 256;
+			racingCarData.r_motor_torque = canData[6] + canData[7] * 256;
+			break;
+		case 0x194:
+			racingCarData.rmotorSpeed = (canData[0] + canData[1]*256)/2 - 10000;
+			break;
+		case 0x195:
+			racingCarData.rmotorTemp = canData[0] - 50;
+			racingCarData.mcu2Temp = canData[1] - 50;
+			break;
+		case 0x196:
+			racingCarData.batAlarm = canData[0];
+			racingCarData.batTemp = canData[1] - 40;
+			racingCarData.batLevel = canData[2];
+			racingCarData.gearMode = canData[3];
+			racingCarData.carMode = canData[4];
+			racingCarData.batVol = (canData[6] + canData[5] * 256) / 10;
+			break;	
+	}	
+}
 #endif

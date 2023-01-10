@@ -14,9 +14,17 @@ void CAN1_Send(uint32_t CAN_ID, uint8_t *CAN_DATA);
 
 void CANFilter_Config(void);
 void CanFilterInit(void);
+
+#define Transmitter 0
+#define Receiver    1
+#if Transmitter
 void carDataUpdate();
 void canDataPack();
+#endif
 
+#if Receiver
+void decodeCanData(uint32_t canID, uint8_t *canData);
+#endif
 struct RacingCarData
 {
 
