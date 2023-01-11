@@ -57,4 +57,6 @@ struct RacingCarData
 	
 };
 extern struct RacingCarData racingCarData;
+extern uint8_t uploadFlag;
+
 #endif //__BSP_CAN_H__

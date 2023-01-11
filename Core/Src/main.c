@@ -109,8 +109,9 @@ int main(void)
 	HAL_GPIO_WritePin(BLT_RST_GPIO_Port, BLT_RST_Pin, GPIO_PIN_SET);
 	
 	//进入main函数之前清空buffer和标志位.
-	
-	//mqttServiceStartup();
+	#if Receiver
+	mqttServiceStartup();
+	#endif
     /* 1. CAN Filter Config */
   CanFilterInit();
 	
@@ -128,9 +129,16 @@ int main(void)
 //		HAL_Delay(500);
 //		ws2812_blue(12);
 //		HAL_Delay(500);
-		//jsonPack();
-		HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7);
-		HAL_Delay(500);
+		#if Receiver
+		if(uploadFlag)
+		{
+			jsonPack();
+			uploadFlag = 0;
+		}
+			
+		#endif
+//		HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7);
+		HAL_Delay(100);
 		
 		//HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7);
     /* USER CODE END WHILE */
@@ -183,6 +191,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+  /** Enables the Clock Security System
+  */
+  HAL_RCC_EnableCSS();
 }
 
 /* USER CODE BEGIN 4 */
@@ -201,6 +213,9 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+		usartTxFlag = 1;
+		printf("some error here.");
+		HAL_Delay(500);
   }
   /* USER CODE END Error_Handler_Debug */
 }
