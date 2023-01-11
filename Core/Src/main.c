@@ -137,8 +137,8 @@ int main(void)
 		}
 			
 		#endif
-//		HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7);
-		HAL_Delay(100);
+		HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7);
+		HAL_Delay(50);
 		
 		//HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7);
     /* USER CODE END WHILE */

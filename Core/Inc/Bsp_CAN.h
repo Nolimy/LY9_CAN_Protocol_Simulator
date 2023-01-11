@@ -15,8 +15,8 @@ void CAN1_Send(uint32_t CAN_ID, uint8_t *CAN_DATA);
 void CANFilter_Config(void);
 void CanFilterInit(void);
 
-#define Transmitter 0
-#define Receiver    1
+#define Transmitter 1
+#define Receiver    0
 #if Transmitter
 void carDataUpdate();
 void canDataPack();

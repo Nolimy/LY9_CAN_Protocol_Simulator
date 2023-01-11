@@ -146,7 +146,7 @@ void carDataUpdate()//模拟汽车跑动数据
 	if(upSpeedFlag)
 	{
 		racingCarData.lmotorSpeed+=100;         //左电机转速  2Bit offset -10000rpm 分辨率:0.5
-		if(racingCarData.lmotorSpeed == 6000)
+		if(racingCarData.lmotorSpeed == 5500)
 			upSpeedFlag = 0;
 	}
 	else
